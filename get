@@ -1,0 +1,61 @@
+import requests
+import pandas as pd
+import schedule
+
+# Define a list of cryptocurrency symbols you want to track
+crypto_symbols = [
+    'BTC-USD', 'ETH-USD', 'XRP-USD', 'LTC-USD', 'BCH-USD', 'ADA-USD',
+    'XLM-USD', 'LINK-USD', 'DOT-USD', 'BNB-USD', 'EOS-USD', 'TRX-USD',
+    'XMR-USD', 'DASH-USD', 'XTZ-USD', 'ZEC-USD', 'DOGE-USD', 'ATOM-USD',
+    'MIOTA-USD', 'VET-USD', 'AAVE-USD', 'UNI-USD', 'SNX-USD', 'MKR-USD',
+    'SOL-USD', 'COMP-USD', 'FTT-USD', 'REN-USD', 'YFI-USD', 'ENJ-USD',
+    'MANA-USD', 'SUSHI-USD', 'FIL-USD', 'THETA-USD', 'ICP-USD', 'SOL-USD',
+    'MATIC-USD', 'CAKE-USD', 'BAT-USD', 'LUNA-USD', 'RVN-USD', 'HT-USD'
+    ]
+
+# Initialize an empty DataFrame to store the data
+crypto_data_df = pd.DataFrame()
+
+def fetch_crypto_data():
+    global crypto_data_df  # Access the global DataFrame
+
+    for symbol in crypto_symbols:
+        url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
+        
+        try:
+            # Add headers to the request to mimic a browser request
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            
+            # Extract the relevant information from the API response
+            timestamp = data['chart']['result'][0]['timestamp']
+            prices = data['chart']['result'][0]['indicators']['quote'][0]
+            
+            # Create a DataFrame for the current symbol's data
+            symbol_df = pd.DataFrame({
+                'Timestamp': timestamp,
+                f'{symbol}_Open': prices['open'],
+                f'{symbol}_High': prices['high'],
+                f'{symbol}_Low': prices['low'],
+                f'{symbol}_Close': prices['close'],
+                f'{symbol}_Volume': prices['volume']
+            })
+            
+            # Merge the symbol's DataFrame into the main DataFrame
+            crypto_data_df = pd.concat([crypto_data_df, symbol_df], axis=1)
+            
+            # Print a message indicating successful data retrieval
+            print(f'Data for {symbol} fetched successfully.')
+        except Exception as e:
+            print(f"Error fetching data for {symbol}: {e}")
+
+# Schedule the data fetching task to run immediately and every 15 minutes thereafter
+fetch_crypto_data()
+schedule.every(15).minutes.do(fetch_crypto_data)
+
+while True:
+    schedule.run_pending()

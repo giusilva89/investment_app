@@ -1,0 +1,61 @@
+import requests
+import pandas as pd
+import schedule
+
+# Define a list of stock symbols you want to track
+stock_symbols = [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'FB', 'NFLX', 'NVDA', 'PYPL', 'INTC',
+    'V', 'JPM', 'GS', 'WFC', 'BRK-B', 'JNJ', 'PFE', 'MRK', 'UNH', 'CSCO',
+    # Add more stock symbols here...
+]
+
+# Initialize an empty DataFrame to store the data
+stock_data_df = pd.DataFrame()
+
+def fetch_stock_data():
+    global stock_data_df  # Access the global DataFrame
+
+    for symbol in stock_symbols:
+        url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
+        
+        try:
+            # Add headers to the request to mimic a browser request
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            
+            # Check if the response contains the expected data structure
+            if 'chart' in data and 'result' in data['chart'] and data['chart']['result']:
+                # Extract the relevant information from the API response
+                timestamp = data['chart']['result'][0]['timestamp']
+                prices = data['chart']['result'][0]['indicators']['quote'][0]
+                
+                # Create a DataFrame for the current symbol's data
+                symbol_df = pd.DataFrame({
+                    'Timestamp': timestamp,
+                    f'{symbol}_Open': prices['open'],
+                    f'{symbol}_High': prices['high'],
+                    f'{symbol}_Low': prices['low'],
+                    f'{symbol}_Close': prices['close'],
+                    f'{symbol}_Volume': prices['volume']
+                })
+                
+                # Merge the symbol's DataFrame into the main DataFrame
+                stock_data_df = pd.concat([stock_data_df, symbol_df], axis=1)
+                
+                # Print a message indicating successful data retrieval
+                print(f'Data for {symbol} fetched successfully.')
+            else:
+                print(f"No data available for {symbol}.")
+        except Exception as e:
+            print(f"Error fetching data for {symbol}: {e}")
+
+# Schedule the data fetching task to run immediately and every 15 minutes thereafter
+fetch_stock_data()
+schedule.every(15).minutes.do(fetch_stock_data)
+
+while True:
+    schedule.run_pending()

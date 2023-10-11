@@ -1,0 +1,22 @@
+import requests
+from bs4 import BeautifulSoup
+
+# Define the URL of the financial news website you want to scrape
+url = 'https://www.coindesk.com/'
+
+# Send a GET request to the website
+response = requests.get(url)
+
+# Parse the HTML content of the page
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# Find and extract the news articles
+articles = soup.find_all('div', class_='article')  # Adjust the HTML structure and class as needed
+
+# Print the titles and content of the articles
+for article in articles:
+    title = article.find('h2').text.strip()  # Remove leading/trailing whitespace
+    content = article.find('p').text.strip()  # Remove leading/trailing whitespace
+    print(f"Title: {title}")
+    print(f"Content: {content}")
+    print("-" * 50)

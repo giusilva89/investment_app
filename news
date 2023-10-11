@@ -1,0 +1,59 @@
+import requests
+from datetime import datetime, timedelta
+
+# Replace 'YOUR_API_KEY' with your actual NewsAPI key
+api_key = '0e7541c31b9c483aaef695370a0c0cc5'
+
+# Calculate the date two days ago from the current date
+two_days_ago = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
+
+# Define the endpoint URL
+url = f'https://newsapi.org/v2/everything'
+
+# Define your query parameters
+params = {
+    'q': 'finance OR crypto OR economics OR "financial market"',  # Specify your keywords here
+    'language': 'en',
+    'apiKey': api_key,
+    'from': two_days_ago,  # Set the start date
+    'to': datetime.now().strftime('%Y-%m-%d'),  # Set the end date (today)
+    'pageSize': 100,  # Number of articles per page (maximum allowed by NewsAPI)
+    'page': 1,  # Start with the first page
+}
+
+all_articles = []  # List to store all articles
+
+while True:
+    # Send a GET request to NewsAPI
+    response = requests.get(url, params=params)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the response as JSON
+        data = response.json()
+
+        # Access the articles on this page
+        articles = data.get('articles', [])
+
+        # Add the articles to the list of all articles
+        all_articles.extend(articles)
+
+        # Check if there are more pages
+        if len(articles) < params['pageSize']:
+            break  # No more pages, exit the loop
+        else:
+            # Increment the page number to fetch the next page
+            params['page'] += 1
+    else:
+        print(f"Error: Unable to fetch news. Status code {response.status_code}")
+        break
+
+# Print the titles and descriptions of all articles
+for index, article in enumerate(all_articles, start=1):
+    print(f"Article {index}:")
+    print(f"Title: {article['title']}")
+    print(f"Description: {article['description']}")
+    print(f"URL: {article['url']}")
+    print("-" * 50)
+
+print(f"Total articles retrieved: {len(all_articles)}")

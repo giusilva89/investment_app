@@ -1,0 +1,31 @@
+import requests
+
+# Define the latitude and longitude coordinates for Dublin Airport
+latitude = "53.4264"
+longitude = "-6.2498"
+
+# Define the API endpoint URL
+api_url = f"http://metwdb-openaccess.ichec.ie/metno-wdb2ts/locationforecast?lat={latitude};long={longitude}"
+
+# Send a GET request to the API
+response = requests.get(api_url)
+
+# Check if the request was successful (HTTP status code 200)
+if response.status_code == 200:
+    # Parse the JSON response
+    weather_data = response.json()
+    
+    # Extract and print the relevant weather information
+    forecasts = weather_data.get("properties", {}).get("timeseries", [])
+    for forecast in forecasts:
+        from_time = forecast.get("time")
+        temperature = forecast.get("data", {}).get("instant", {}).get("details", {}).get("air_temperature")
+        precipitation = forecast.get("data", {}).get("next_1_hours", {}).get("details", {}).get("precipitation_amount")
+        
+        if from_time and temperature and precipitation:
+            print(f"Date and Time: {from_time}")
+            print(f"Temperature: {temperature} °C")
+            print(f"Precipitation: {precipitation} mm")
+            print("-" * 50)
+else:
+    print(f"Failed to fetch weather data. Status code: {response.status_code}")
